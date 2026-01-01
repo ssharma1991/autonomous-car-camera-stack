@@ -5,32 +5,22 @@ from estimators.stereo_sgbm import StereoSGBM
 from estimators.monodepth2 import Monodepth2
 from estimators.raft_stereo import RAFTStereoEstimator
 from pipeline.metrics import compute_metrics
-from pipeline.loader import load_frame
-
-def median_scale(pred, gt):
-    """Scale monocular depth prediction to match GT median."""
-    mask = ~np.isnan(gt) & ~np.isnan(pred)
-    if np.sum(mask) == 0:
-        return pred  # nothing to scale against
-    scale = np.median(gt[mask]) / np.median(pred[mask])
-    return pred * scale
+from pipeline.loader import load_kitti_sequence, load_frame
 
 
 # ---------------------------------------------------------
 # 1. Choose a single KITTI frame
 # ---------------------------------------------------------
-left_path  = "data/2011_09_26/2011_09_26_drive_0001_sync/image_02/data/0000000005.png"
-right_path = "data/2011_09_26/2011_09_26_drive_0001_sync/image_03/data/0000000005.png"
-gt_path    = "data/2011_09_26/2011_09_26_drive_0001_sync/proj_depth/groundtruth/image_02/0000000005.png"
-
-# Load frame (left RGB, right RGB, GT float32)
+dataset = load_kitti_sequence("data/2011_09_26/2011_09_26_drive_0001_sync")
+left_path, right_path, gt_path = dataset[0] # first valid aligned frame
 left, right, gt = load_frame(left_path, right_path, gt_path)
 
 # ---------------------------------------------------------
 # 2. Initialize models
 # ---------------------------------------------------------
+mono_scale = 5.1331 # Precomputed global scale for Monodepth2
 sgbm = StereoSGBM()
-mono = Monodepth2()
+mono = Monodepth2(scale_factor=mono_scale)
 raft = RAFTStereoEstimator()
 
 # ---------------------------------------------------------
@@ -50,7 +40,6 @@ pred_raft = cv2.resize(pred_raft, (W, H))
 # 4. Compute metrics
 # ---------------------------------------------------------
 metrics_sgbm = compute_metrics(pred_sgbm, gt)
-pred_mono = median_scale(pred_mono, gt)
 metrics_mono = compute_metrics(pred_mono, gt)
 metrics_raft = compute_metrics(pred_raft, gt)
 

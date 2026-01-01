@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 
 from estimators.stereo_sgbm import StereoSGBM
-from estimators.monodepth2 import monodepth2
+from estimators.monodepth2 import Monodepth2
 from estimators.raft_stereo import RAFTStereoEstimator
 from pipeline.loader import load_kitti_sequence, load_frame
 from pipeline.metrics import compute_metrics
@@ -14,7 +14,7 @@ dataset = load_kitti_sequence("data/2011_09_26/2011_09_26_drive_0001_sync")
 # Register models
 models = {
     "SGBM": StereoSGBM(),
-    "Monodepth2": monodepth2(),
+    "Monodepth2": Monodepth2(),
     "RAFT-Stereo": RAFTStereoEstimator()
 }
 

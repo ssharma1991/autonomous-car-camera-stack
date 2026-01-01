@@ -5,20 +5,25 @@ import numpy as np
 
 def load_kitti_sequence(base):
     """
-    Loads KITTI stereo sequence:
-      - left images  (image_02)
-      - right images (image_03)
-      - groundtruth depth (proj_depth/groundtruth/image_02)
-    Returns three sorted lists of file paths.
+    Load KITTI stereo frames aligned by GT filenames.
+    GT exists only for frames >= 5, so we match by filename.
+    Returns: list of (left, right, gt) tuples.
     """
-    left_paths  = sorted(glob.glob(os.path.join(base, "image_02/data/*.png")))
-    right_paths = sorted(glob.glob(os.path.join(base, "image_03/data/*.png")))
-    gt_paths    = sorted(glob.glob(os.path.join(base, "proj_depth/groundtruth/image_02/*.png")))
+    lefts  = glob.glob(os.path.join(base, "image_02/data/*.png"))
+    rights = glob.glob(os.path.join(base, "image_03/data/*.png"))
+    gts    = glob.glob(os.path.join(base, "proj_depth/groundtruth/image_02/*.png"))
 
-    assert len(left_paths) == len(right_paths) == len(gt_paths), \
-        "KITTI sequence mismatch: left/right/gt counts differ"
+    lefts  = {os.path.basename(p): p for p in lefts}
+    rights = {os.path.basename(p): p for p in rights}
 
-    return list(zip(left_paths, right_paths, gt_paths))
+    aligned = []
+    for gt in sorted(gts):
+        name = os.path.basename(gt)
+        if name in lefts and name in rights:
+            aligned.append((lefts[name], rights[name], gt))
+
+    print(f"Loaded {len(aligned)} aligned frames")
+    return aligned
 
 
 def load_frame(left_path, right_path, gt_path):
