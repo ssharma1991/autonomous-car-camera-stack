@@ -8,8 +8,14 @@ class StereoSGBM:
 
         self.matcher = cv2.StereoSGBM_create(
             minDisparity=0,
-            numDisparities=128,
-            blockSize=5
+            numDisparities=128,      # must be divisible by 16
+            blockSize=5,
+            P1=8 * 5 * 5,
+            P2=32 * 5 * 5,
+            disp12MaxDiff=1,
+            uniquenessRatio=10,
+            speckleWindowSize=50,
+            speckleRange=2
         )
 
     def predict(self, left, right):
