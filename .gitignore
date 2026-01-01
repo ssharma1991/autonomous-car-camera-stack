@@ -1,0 +1,4 @@
+depth_map/data/
+depth_map/third_party/
+__pycache__/
+*.zip
