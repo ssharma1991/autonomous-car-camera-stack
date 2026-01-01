@@ -12,21 +12,23 @@ from pipeline.video import VideoWriter
 dataset = load_kitti_sequence("data/2011_09_26/2011_09_26_drive_0001_sync")
 
 # Register models
+mono_scale = 5.1331 # Precomputed global scale for Monodepth2
 models = {
     "SGBM": StereoSGBM(),
-    "Monodepth2": Monodepth2(),
+    "Monodepth2": Monodepth2(scale_factor=mono_scale),
     "RAFT-Stereo": RAFTStereoEstimator()
 }
 
 # Prepare video writer
 sample_left = cv2.imread(dataset[0][0])
 h, w = sample_left.shape[:2]
-writer = VideoWriter("output.mp4", frame_size=(w*2, h*5))
+writer = VideoWriter("depth_comparison.mp4", frame_size=(w*2, h*5))
 
 # Metric curves
 curves = {f"{name}_{m}": [] for name in models for m in ["rmse","absrel","d1","d2","d3"]}
 
 for left_path, right_path, gt_path in dataset:
+    print(f"Processing frame: {left_path}")
 
     # Load frame (RGB left, RGB right, float32 GT)
     left, right, gt = load_frame(left_path, right_path, gt_path)
@@ -60,4 +62,5 @@ for left_path, right_path, gt_path in dataset:
     writer.add_frame(left, right, preds, errors, metrics, gt)
 
 writer.close()
+writer.finalize_video("depth_comparison.mp4")
 save_metric_plot(curves, "metrics.png")

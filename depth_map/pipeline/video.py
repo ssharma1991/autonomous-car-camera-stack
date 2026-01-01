@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+import subprocess
 
 FONT = cv2.FONT_HERSHEY_SIMPLEX
 
@@ -16,13 +17,13 @@ def colorize_depth(depth):
 def colorize_error(err):
     return cv2.applyColorMap(_normalize(err), cv2.COLORMAP_TURBO)
 
-def add_text(img, text, y=20):
-    cv2.putText(img, text, (10, y), FONT, 0.5, (255,255,255), 1, cv2.LINE_AA)
+def add_text(img, text, y=30):
+    cv2.putText(img, text, (10, y), FONT, 0.9, (255,255,255), 2, cv2.LINE_AA)
 
-def add_metrics(img, metrics, y=40):
+def add_metrics(img, metrics, y=60):
     rmse, absrel, d1, d2, d3 = metrics
     txt = f"RMSE:{rmse:.2f} AbsRel:{absrel:.3f} d1:{d1:.2f} d2:{d2:.2f} d3:{d3:.2f}"
-    cv2.putText(img, txt, (10, y), FONT, 0.45, (255,255,255), 1, cv2.LINE_AA)
+    cv2.putText(img, txt, (10, y), FONT, 0.8, (255,255,255), 2, cv2.LINE_AA)
 
 def make_tile(image, label=None, metrics=None):
     tile = image.copy()
@@ -33,7 +34,7 @@ def make_tile(image, label=None, metrics=None):
     return tile
 
 class VideoWriter:
-    def __init__(self, output_path, frame_size, fps=10):
+    def __init__(self, output_path, frame_size, fps=5):
         fourcc = cv2.VideoWriter_fourcc(*"mp4v")
         self.writer = cv2.VideoWriter(output_path, fourcc, fps, frame_size)
 
@@ -56,6 +57,8 @@ class VideoWriter:
         rows = []
 
         # Row 1: inputs
+        left = cv2.cvtColor(left, cv2.COLOR_RGB2BGR)
+        right = cv2.cvtColor(right, cv2.COLOR_RGB2BGR)
         rows.append([
             make_tile(left,  "Left image"),
             make_tile(right, "Right image")
@@ -63,14 +66,14 @@ class VideoWriter:
 
         # Rows for each model
         for name in preds:
-            depth_tile = make_tile(colorize_depth(preds[name]), f"{name} depth", metrics[name])
-            err_tile   = make_tile(colorize_error(errors[name]), f"{name} error")
+            depth_tile = make_tile(colorize_depth(preds[name]), f"{name} depth")
+            err_tile   = make_tile(colorize_error(errors[name]), f"{name} error", metrics[name])
             rows.append([depth_tile, err_tile])
 
         # Last row: GT + difficulty
         rows.append([
+            make_tile(colorize_error(difficulty), "Model disagreement"),
             make_tile(colorize_depth(gt), "Groundtruth depth"),
-            make_tile(colorize_error(difficulty), "Difficulty map")
         ])
 
         # Stack into final frame
@@ -79,3 +82,8 @@ class VideoWriter:
 
     def close(self):
         self.writer.release()
+
+    def finalize_video(self, input_path):
+        output_path = input_path.replace(".mp4", "_h264.mp4")
+        subprocess.run(["ffmpeg", "-y", "-i", input_path, "-vcodec", "libx264", output_path])
+        return output_path
