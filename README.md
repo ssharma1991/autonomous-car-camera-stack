@@ -24,4 +24,7 @@ python3 run.py
 
 Below is an example result from the KITTI 2011_09_26 sequence (about 100 frames).
 
+![depth_comparison](depth_map/depth_comparison.gif)
+![depth_comparison_metrics](depth_map/metrics.png)
+
 RAFT‑Stereo performs best, Monodepth2 is a strong monocular baseline, and SGBM provides a classical reference point.
