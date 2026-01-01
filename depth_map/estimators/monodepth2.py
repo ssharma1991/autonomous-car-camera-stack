@@ -6,7 +6,7 @@ import cv2
 import numpy as np
 
 class Monodepth2:
-    def __init__(self, model_name="mono+stereo_640x192", scale_factor=1.0):
+    def __init__(self, model_name="mono+stereo_1024x320", scale_factor=1.0):
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.scale_factor = scale_factor
 

@@ -12,7 +12,7 @@ from pipeline.video import VideoWriter
 dataset = load_kitti_sequence("data/2011_09_26/2011_09_26_drive_0001_sync")
 
 # Register models
-mono_scale = 5.1331 # Precomputed global scale for Monodepth2
+mono_scale = 5.1033 # Precomputed global scale for Monodepth2
 models = {
     "SGBM": StereoSGBM(),
     "Monodepth2": Monodepth2(scale_factor=mono_scale),
